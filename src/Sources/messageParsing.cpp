@@ -29,7 +29,7 @@ void order(const json &msg, std::shared_ptr<SimulatorState> simState) {
       {"follow_flight_plan", [it, &msg]() { it->followFlightPlan(); }},
       {"enter_holding",
        [it, &msg]() { it->taxiToRunway(msg["data"]["name"]); }},
-      {"landing", [it, &msg]() { it->landing(msg["data"]["name"]); }},
+      {"landing", [it, &msg]() { it->landing(msg["data"]["name"].template get<std::string>()); }},
       {"touch_and_go", [it, &msg]() { it->touchAndGo(msg["data"]["name"]); }},
       {"enter_runway", [it]() { it->enterRunway(); }},
       {"enter_airport_loop", [it]() { it->takeOff(); }}};

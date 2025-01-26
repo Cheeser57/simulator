@@ -46,13 +46,38 @@ void from_json(const json &j, PlaneData &p) {
 // >>>>>>> main
 
 // PlaneFlightData parsing
-void to_json(json &j, const PlaneFlightData &p) {
-  j = json{{"id", p.id},
-           {"squawk", p.squawk},
-           {"fuel", p.fuel},
-           {"velocity", p.vel},
-           {"position", p.pos},
-           {"targets", p.targets}};
+// void to_json(json &j, const PlaneFlightData &p) {
+//   j = json{{"id", p.id},
+//            {"squawk", p.squawk},
+//            {"velocity", p.vel},
+//            {"position", p.pos},
+//            {"targets", p.targets}};
+// }
+
+
+// to_json function
+void to_json(json& j, const PlaneFlightData& p) {
+    j = json{ {"id", p.id},
+             {"squawk", p.squawk},
+             {"fuel", p.fuel},
+             {"velocity",
+              {
+                  {"direction", p.vel.heading},
+                  {"value", p.vel.value},
+              }},
+             {"position",
+              {{"latitude", p.pos.lat()},
+               {"longitude", p.pos.lon()},
+               {"altitude", p.pos.alt()}}},
+             {"targets", json::array()} };
+
+    for (const auto& target : p.targets) {
+        j["targets"].push_back({
+            {"latitude", target.lat()},
+            {"longitude", target.lon()},
+            {"altitude", target.alt()}
+        });
+    }
 }
 
 void from_json(const json &j, PlaneFlightData &p) {
@@ -61,6 +86,7 @@ void from_json(const json &j, PlaneFlightData &p) {
   j.at("velocity").get_to(p.vel);
   j.at("position").get_to(p.pos);
   j.at("targets").get_to(p.targets);
+
 }
 // PlaneFlightData parsing
 
@@ -178,7 +204,7 @@ void Plane::updatePosition(float timeDelta) {
   _pos.lat() += std::sin(_vel.heading) * _vel.value * timeDelta;
   _pos.lon() += std::cos(_vel.heading) * _vel.value * timeDelta;
 
-  // <<<<<<< HEAD
+
   // Altitude
   double altitudeDelta = getTrgAlt() - _pos.alt();
 
@@ -189,7 +215,7 @@ void Plane::updatePosition(float timeDelta) {
 }
 
 void Plane::updateFlightPlan(bool force, double margin) {
-  // <<<<<<< HEAD
+
   if (mode == MODE::HDG)
     return;
 
@@ -199,7 +225,7 @@ void Plane::updateFlightPlan(bool force, double margin) {
   if (force || distance(_pos, _target.pos) < margin) {
     if ((_flightPlan.route.size() == 0 && _flightPlan.auxiliary.size() == 0) ||
         (mode == MODE::AUX && _flightPlan.auxiliary.size() == 0)) {
-      // =======
+
       setModeHdg();
       return;
     }
@@ -227,10 +253,10 @@ void Plane::updateFlightPlan(bool force, double margin) {
     }
 
     if (next.useHeading) {
-      // <<<<<<< HEAD
+
       std::cout << "Changing Target " << next.pos << std::endl;
       _flightPlan.vaildPathFound = false;
-      // =======
+
       generateHelperWaypoints(next);
     } else {
       addWaypoint(next, true);
@@ -257,9 +283,11 @@ double Plane::getTrgVel() {
   if (_auxParam.overwriteVel || mode == MODE::HDG) {
     return _auxParam.vel.value;
   }
+
   if (mode != MODE::HDG && _target.interpolateVel) {
     return _flightPlan.interTrg.vel.value + (_target.vel.value - _flightPlan.interTrg.vel.value) /
       distance(_target.pos, _flightPlan.interTrg.pos) * distance(_pos, _flightPlan.interTrg.pos);
+
   }
   return _target.vel.value;
 }
@@ -320,10 +348,9 @@ double Plane::getTurnFactor() {
 
 double Plane::findHeadingDelta(GeoPos<double> pos, GeoPos<double> targetPos) {
   double targetHeading;
-  // <<<<<<< HEAD
+
   if (mode == MODE::HDG)
     targetHeading = _auxParam.vel.heading;
-  // =======
   else {
     targetHeading = fixAngle(
         std::atan2(targetPos.lat() - pos.lat(), targetPos.lon() - pos.lon()));
@@ -354,10 +381,8 @@ double Plane::getTurnRadius() {
   double vel = std::max(_vel.value, getTrgVel());
   vel = std::min(std::max(vel, config->minSpeed), config->maxSpeed);
   double n = (_declaredEmergency) ? config->maxLoad : config->normalLoad;
-  // <<<<<<< HEAD
   return 1.2 *
          std::sqrt(-std::pow(vel, 4) / (std::pow(G, 2) * (1 - std::pow(n, 2))));
-  // =======
 }
 
 bool Plane::checkMinRadius() {
@@ -386,7 +411,6 @@ void Plane::generateHelperWaypoints(FlightSegment targetSegment) {
   Waypoint start = {_pos.lon(), _pos.lat(), _vel.heading};
   Waypoint end = {tPos.lon(), tPos.lat(), tVel.heading};
 
-  // <<<<<<< HEAD
   int pointCount = int(std::ceil(r / 25.0));
   auto route = generateShortestRoute(start, end, r, pointCount);
 
@@ -406,7 +430,6 @@ void Plane::generateHelperWaypoints(FlightSegment targetSegment) {
   updateFlightPlan();
 }
 
-// <<<<<<< HEAD
 void Plane::generateLandingWaypoints(RUNWAY approach, bool succesful = true,
                                      double slopeAngle = 3,
                                      double distance = 5000) {
@@ -418,7 +441,6 @@ void Plane::generateLandingWaypoints(RUNWAY approach, bool succesful = true,
   double dir = first.vel.heading - PI;
   double alt = distance * std::tan(dgr2rad(slopeAngle));
 
-  // <<<<<<< HEAD
   GeoPos<double> wpLand = {{first.pos.lat() + sin(dir) * distance,
                             first.pos.lon() + cos(dir) * distance, alt}};
   generateHelperWaypoints({wpLand, {_vel.value, first.vel.heading}});
@@ -528,7 +550,6 @@ std::vector<GeoPos<double>> Plane::getTargets() const {
 }
 
 void Plane::setAuxParam() {
-  // <<<<<<< HEAD
   _auxParam.vel.heading = _vel.heading;
   if (!_auxParam.overwriteVel)
     _auxParam.vel.value = _vel.value;
@@ -550,6 +571,7 @@ void Plane::setAltitude(float altitude) {
 void Plane::setHeadpoint(GeoPos<double> point) {
   setModeAux();
   FlightSegment seg = { geo2xy(point), _target.vel};
+
   addWaypoint(seg, true);
   _auxParam.overwriteVel = true;
   _auxParam.vel.value = _target.vel.value;
@@ -566,7 +588,7 @@ void Plane::setHeading(float heading) {
 void Plane::setVelocity(float vel) {
   if (mode == MODE::AUX && _target.vel.value == 0.0) return;
   if (mode != MODE::HDG && _target.interpolateVel) return;
-  
+
   _auxParam.overwriteVel = true;
   double val = kts2ms(vel);
   if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH) {
@@ -599,6 +621,7 @@ void Plane::landing(std::string name) {
   if (name == "MAPt 28") runway = RUNWAY::R28;
   else if (name == "MAPt 10") runway = RUNWAY::R10;
   else return;
+
 
   _auxParam.overwriteAlt = false;
   _auxParam.overwriteVel = false;
@@ -669,6 +692,7 @@ void Plane::takeOff() {
   }
 }
 
+
 void Plane::setFuel(float value) {
 
 }
@@ -676,6 +700,7 @@ void Plane::setFuel(float value) {
 void Plane::setVerticalSpeed(float value) {
   _auxParam.altChange = ft2meter(value);
 }
+
 
 void Plane::enterAirportLoop() {}
 void Plane::enterHolding() {}
