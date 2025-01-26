@@ -43,42 +43,42 @@ void from_json(const json &j, PlaneData &p) {
   j.at("position").get_to(p.pos);
 }
 // PlaneData parsing
-// >>>>>>> main
-
-// PlaneFlightData parsing
-// void to_json(json &j, const PlaneFlightData &p) {
-//   j = json{{"id", p.id},
-//            {"squawk", p.squawk},
-//            {"velocity", p.vel},
-//            {"position", p.pos},
-//            {"targets", p.targets}};
-// }
+// 
+ //PlaneFlightData parsing
+ void to_json(json &j, const PlaneFlightData &p) {
+   j = json{{"id", p.id},
+            {"fuel", p.fuel},
+            {"squawk", p.squawk},
+            {"velocity", p.vel},
+            {"position", p.pos},
+            {"targets", p.targets}};
+ }
 
 
 // to_json function
-void to_json(json& j, const PlaneFlightData& p) {
-    j = json{ {"id", p.id},
-             {"squawk", p.squawk},
-             {"fuel", p.fuel},
-             {"velocity",
-              {
-                  {"direction", p.vel.heading},
-                  {"value", p.vel.value},
-              }},
-             {"position",
-              {{"latitude", p.pos.lat()},
-               {"longitude", p.pos.lon()},
-               {"altitude", p.pos.alt()}}},
-             {"targets", json::array()} };
-
-    for (const auto& target : p.targets) {
-        j["targets"].push_back({
-            {"latitude", target.lat()},
-            {"longitude", target.lon()},
-            {"altitude", target.alt()}
-        });
-    }
-}
+//void to_json(json& j, const PlaneFlightData& p) {
+//    j = json{ {"id", p.id},
+//             {"squawk", p.squawk},
+//             {"fuel", p.fuel},
+//             {"velocity",
+//              {
+//                  {"direction", p.vel.heading},
+//                  {"value", p.vel.value},
+//              }},
+//             {"position",
+//              {{"latitude", p.pos.lat()},
+//               {"longitude", p.pos.lon()},
+//               {"altitude", p.pos.alt()}}},
+//             {"targets", json::array()} };
+//
+//    for (const auto& target : p.targets) {
+//        j["targets"].push_back({
+//            {"latitude", target.lat()},
+//            {"longitude", target.lon()},
+//            {"altitude", target.alt()}
+//        });
+//    }
+//}
 
 void from_json(const json &j, PlaneFlightData &p) {
   j.at("id").get_to(p.id);
