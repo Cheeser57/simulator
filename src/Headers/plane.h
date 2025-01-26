@@ -1,4 +1,6 @@
 #pragma once
+#include "advanced_ai.h"
+#include "airportData.h"
 #include "common.h"
 #include "convertions.h"
 #include "flightPlan.h"
@@ -6,19 +8,33 @@
 #include "planeConfig.h"
 #include "vec.h"
 #include "velocity.h"
-#include "airportData.h"
-#include "advanced_ai.h"
 
 #include <atomic>
 #include <cmath>
 #include <controlParam.h>
 
 enum class MODE { AUTO, HDG, AUX, GRD, PLAYER };
-enum class GRD_MODE { NONE, APPROACH, TAXI_OUT, IDLE, 
-                      TAXI_IN, HOLD_RWY, TAXI_RWY, TAKEOFF};
+enum class GRD_MODE {
+  NONE,
+  APPROACH,
+  TAXI_OUT,
+  IDLE,
+  TAXI_IN,
+  HOLD_RWY,
+  TAXI_RWY,
+  TAKEOFF
+};
 
+// TO DO:
+//  fix advanced turning/pathfinding
+//  landing, takoff, airport circle
+//  ground behavior
+//  finish order processing
+
+namespace data {
 struct PlaneInfo {
   int id;
+  bool sim_id;
   bool isGrounded;
   double fuel;
   std::string airline;
@@ -29,13 +45,9 @@ struct PlaneInfo {
   std::string model;
 };
 
-// TO DO:
-//  fix advanced turning/pathfinding
-//  landing, takoff, airport circle
-//  ground behavior
-//  finish order processing
+void to_json(json &j, const PlaneInfo &p);
+void from_json(const json &j, PlaneInfo &p);
 
-namespace data {
 struct PlaneData {
   PlaneInfo info;
   Velocity vel;
@@ -44,7 +56,6 @@ struct PlaneData {
 
 void to_json(json &j, const PlaneData &p);
 void from_json(const json &j, PlaneData &p);
-
 
 struct PlaneFlightData {
   int id;
@@ -55,14 +66,14 @@ struct PlaneFlightData {
   std::vector<GeoPos<double>> targets;
 };
 
-void to_json(json& j, const PlaneFlightData& p);
-void from_json(const json& j, PlaneFlightData& p);
+void to_json(json &j, const PlaneFlightData &p);
+void from_json(const json &j, PlaneFlightData &p);
 } // namespace data
 
 class Plane {
 public:
   std::string uuid{""};
-  PlaneInfo _info;
+  data::PlaneInfo _info;
   Velocity _vel;
   GeoPos<double> _pos;
 
@@ -72,7 +83,6 @@ public:
 
   controlParam _auxParam;
   bool _declaredEmergency = false;
-
 
   FlightPlan _flightPlan;
   std::shared_ptr<const PlaneConfig> config;
@@ -90,7 +100,7 @@ public:
 
   // Maybe should be a seprate his class/file
   void generateLandingWaypoints(RUNWAY approach, bool succesful,
-            double slopeAngle, double distance );
+                                double slopeAngle, double distance);
   void generateTaxiWaypoints(RUNWAY runway);
   void generateRunwayWaypoints(bool toFront);
   void generateTakeOffWaypoints(bool toFront, double slope);
@@ -137,5 +147,4 @@ private:
 
   double getTrgVel();
   double getTrgAlt();
-  
 };

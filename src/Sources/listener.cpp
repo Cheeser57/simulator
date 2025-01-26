@@ -9,7 +9,7 @@ Listener::Listener(net::io_context &ioc, tcp::endpoint endpoint,
   // Open the acceptor
   _acceptor.open(endpoint.protocol(), ec);
   if (ec) {
-    fail(ec, "open");
+    fail(ec, "open", true);
     return;
   }
 
@@ -23,14 +23,14 @@ Listener::Listener(net::io_context &ioc, tcp::endpoint endpoint,
   // Bind to the server address
   _acceptor.bind(endpoint, ec);
   if (ec) {
-    fail(ec, "bind");
+    fail(ec, "bind", true);
     return;
   }
 
   // Start listening for connections
   _acceptor.listen(net::socket_base::max_listen_connections, ec);
   if (ec) {
-    fail(ec, "listen");
+    fail(ec, "listen", true);
     return;
   }
 }

@@ -42,7 +42,6 @@ bool WebsocketServer::send(std::string uuid, const std::string &data) {
 }
 
 void WebsocketServer::broadcast(const std::string &data,
-                                // const std::vector<ClientType> &clientTypes,
                                 const std::vector<std::string> exceptUuids) {
   for (const auto &[key, val] : _state->sessions) {
     // find uuid in exceptions
@@ -50,16 +49,6 @@ void WebsocketServer::broadcast(const std::string &data,
     if (it != exceptUuids.end()) {
       continue;
     }
-
-    // // find clientType in allowed clientTypes
-    // auto it2 =
-    //     std::find(clientTypes.begin(), clientTypes.end(),
-    // val->clientType);
-    // if (it2 == clientTypes.end()) {
-    //   continue;
-    // }
-
-    // finally send the data
     val->session->send(data);
   }
 }

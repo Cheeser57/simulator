@@ -1,85 +1,69 @@
 #include "plane.h"
 
 namespace data {
+// PlaneInfo parsing
+void to_json(json &j, const PlaneInfo &p) {
+  j = json{
+      {"id", p.id},
+      {"sim_id", p.sim_id},
+      {"isGrounded", p.isGrounded},
+      {"airline", p.airline},
+      {"flight_number", p.flightNumber},
+      {"plane_number", p.planeNumber},
+      {"callsign", p.callSign},
+      {"squawk", p.squawk},
+      {"model", p.model},
+  };
+}
 
+void from_json(const json &j, PlaneInfo &p) {
+  j.at("id").get_to(p.id);
+  j.at("isGrounded").get_to(p.isGrounded);
+  j.at("airline").get_to(p.airline);
+  j.at("flight_number").get_to(p.flightNumber);
+  j.at("plane_number").get_to(p.planeNumber);
+  j.at("callsign").get_to(p.callSign);
+  j.at("squawk").get_to(p.squawk);
+  auto it = j.find("model");
+  if (it == j.end())
+    return;
+  j.at("model").get_to(p.model);
+}
+// PlaneInfo parsing
+
+// PlaneData parsing
 void to_json(json &j, const PlaneData &p) {
-    j = json{ {"id", p.info.id},
-             {"isGrounded", p.info.isGrounded},
-             {"airline", p.info.airline},
-             {"flight_number", p.info.flightNumber},
-             {"plane_number", p.info.planeNumber},
-             {"callsign", p.info.callSign},
-             {"squawk", p.info.squawk},
-             {"model", p.info.model},
-             {"fuel", p.info.fuel},
-             {"velocity", {{"direction", p.vel.heading}, {"value", p.vel.value}}},
-             {"position",
-              {{"latitude", p.pos.lat()},
-               {"longitude", p.pos.lon()},
-               {"altitude", p.pos.alt()}}}
-    };
+  j = json{{"velocity", p.vel}, {"position", p.pos}};
+  j.merge_patch(json(p.info));
 }
 
 void from_json(const json &j, PlaneData &p) {
-  const auto &info = j.at("info");
-  info.at("id").get_to(p.info.id);
-  info.at("isGrounded").get_to(p.info.isGrounded);
-  info.at("airline").get_to(p.info.airline);
-  info.at("flightNumber").get_to(p.info.flightNumber);
-  info.at("planeNumber").get_to(p.info.planeNumber);
-  info.at("callSign").get_to(p.info.callSign);
-  info.at("squawk").get_to(p.info.squawk);
-  info.at("model").get_to(p.info.model);
+  j.get_to(p.info);
+  j.at("velocity").get_to(p.vel);
+  j.at("position").get_to(p.pos);
+}
+// PlaneData parsing
+// >>>>>>> main
 
-  const auto &vel = j.at("velocity");
-  vel.at("direction").get_to(p.vel.heading);
-  vel.at("value").get_to(p.vel.value);
-
-  const auto &pos = j.at("position");
-  pos.at("latitude").get_to(p.pos.lat());
-  pos.at("longitude").get_to(p.pos.lon());
-  pos.at("altitude").get_to(p.pos.alt());
+// PlaneFlightData parsing
+void to_json(json &j, const PlaneFlightData &p) {
+  j = json{{"id", p.id},
+           {"squawk", p.squawk},
+           {"fuel", p.fuel},
+           {"velocity", p.vel},
+           {"position", p.pos},
+           {"targets", p.targets}};
 }
 
-// to_json function
-void to_json(json& j, const PlaneFlightData& p) {
-    j = json{ {"id", p.id},
-             {"squawk", p.squawk},
-             {"fuel", p.fuel},
-             {"velocity",
-              {
-                  {"direction", p.vel.heading},
-                  {"value", p.vel.value},
-              }},
-             {"position",
-              {{"latitude", p.pos.lat()},
-               {"longitude", p.pos.lon()},
-               {"altitude", p.pos.alt()}}},
-             {"targets", json::array()} };
-
-    for (const auto& target : p.targets) {
-        j["targets"].push_back({
-            {"latitude", target.lat()},
-            {"longitude", target.lon()},
-            {"altitude", target.alt()}
-        });
-    }
+void from_json(const json &j, PlaneFlightData &p) {
+  j.at("id").get_to(p.id);
+  j.at("squawk").get_to(p.squawk);
+  j.at("velocity").get_to(p.vel);
+  j.at("position").get_to(p.pos);
+  j.at("targets").get_to(p.targets);
 }
+// PlaneFlightData parsing
 
-// from_json function
-void from_json(const json& j, PlaneFlightData& p) {
-    j.at("squawk").get_to(p.squawk);
-    j.at("id").get_to(p.id);
-
-    const auto& vel = j.at("velocity");
-    vel.at("direction").get_to(p.vel.heading);
-    vel.at("value").get_to(p.vel.value);
-
-    const auto& pos = j.at("position");
-    pos.at("latitude").get_to(p.pos.lat());
-    pos.at("longitude").get_to(p.pos.lon());
-    pos.at("altitude").get_to(p.pos.alt());
-}
 } // namespace data
 
 void Plane::setData(const data::PlaneData &pd) {
@@ -100,27 +84,26 @@ void Plane::setFlightData(const data::PlaneFlightData &pd) {
   this->_pos = geo2xy(pd.pos);
   this->_vel.heading = pd.vel.heading;
   this->_vel.value = kts2ms(pd.vel.value);
-  //this->_target.pos = geo2xy(pd.targets.front());
+  // this->_target.pos = geo2xy(pd.targets.front());
 }
 data::PlaneFlightData Plane::getFlightData() const {
-  // this is a heavy implementation, shoud be moved to a seperate msg that is sent only on
-  // target updates
+  // <<<<<<< HEAD
+  // this is a heavy implementation, shoud be moved to a seperate msg that is
+  // sent only on target updates
   std::vector<GeoPos<double>> targets = getTargets();
-  
 
   /*for (auto trg : targets) std::cout << trg << std::endl;
   std::cout << std::endl;*/
-  return data::PlaneFlightData{ this->_info.id, this->_info.squawk, this->_info.fuel,
-                              {ms2kts(this->_vel.value), -this->_vel.heading},
-                                xy2geo(this->_pos), targets };
+  return data::PlaneFlightData{
+      this->_info.id,     this->_info.squawk,
+      this->_info.fuel,   {ms2kts(this->_vel.value), -this->_vel.heading},
+      xy2geo(this->_pos), targets};
 }
-
 
 Plane::Plane(const data::PlaneData &data, const FlightPlan &flightplan,
              std::shared_ptr<const PlaneConfig> configPointer) {
   this->_info = data.info;
   this->_vel = data.vel;
-
   this->_pos = geo2xy(data.pos);
   this->_pos.alt() =
       std::min(std::max(_pos.alt(), 0.0), configPointer->maxAltitude);
@@ -142,24 +125,26 @@ Plane::Plane(const data::PlaneData &data, const FlightPlan &flightplan,
     _auxParam.vel.value = 0;
   } else {
     this->_vel.value = std::min(std::max(_vel.value, configPointer->minSpeed),
-      configPointer->maxSpeed);
+                                configPointer->maxSpeed);
 
     updateFlightPlan(true);
   }
-
 }
 
 void Plane::update(float timeDelta) {
-  //Debug
-  //std::cout << static_cast<std::underlying_type<GRD_MODE>::type>(grdMode) << std::endl;
-  //std::cout << _info.callSign << " target: " << xy2geo(_target.pos)
-  //        << " dist: " << distance(_pos, _target.pos) << std::endl;
-  //std::cout << "Hdg: " << rad2hdg(_vel.heading) << " Speed: " << _vel.value
-  //        << std::endl;
-  //std::cout << "Pos(GEO): " << xy2geo(_pos) << std::endl;
-  //std::cout << "Pos (XY): " << _pos << std::endl << std::endl;
-  if (mode == MODE::PLAYER || grdMode == GRD_MODE::IDLE) return;
-  
+  // <<<<<<< HEAD
+  // Debug
+  // std::cout << static_cast<std::underlying_type<GRD_MODE>::type>(grdMode) <<
+  // std::endl; std::cout << _info.callSign << " target: " <<
+  // xy2geo(_target.pos)
+  //         << " dist: " << distance(_pos, _target.pos) << std::endl;
+  // std::cout << "Hdg: " << rad2hdg(_vel.heading) << " Speed: " << _vel.value
+  //         << std::endl;
+  // std::cout << "Pos(GEO): " << xy2geo(_pos) << std::endl;
+  // std::cout << "Pos (XY): " << _pos << std::endl << std::endl;
+  if (mode == MODE::PLAYER || grdMode == GRD_MODE::IDLE)
+    return;
+
   updateFlightPlan();
   updateParameters(timeDelta);
   updatePosition(timeDelta);
@@ -167,12 +152,13 @@ void Plane::update(float timeDelta) {
 }
 
 void Plane::updateVelocity(float timeDelta) {
+  // <<<<<<< HEAD
   // Velcoity
   double velDelta = getTrgVel() - _vel.value;
-  _vel.value += sgn(velDelta) *
-               std::min(std::abs(velDelta),
-                        std::pow(config->accelerationFactor, 2) 
-                        / _vel.value * timeDelta);
+  _vel.value +=
+      sgn(velDelta) *
+      std::min(std::abs(velDelta), std::pow(config->accelerationFactor, 2) /
+                                       _vel.value * timeDelta);
 
   /*if (grdMode == GRD_MODE::NONE || grdMode == GRD_MODE::APPROACH) {
     _vel.value = std::min(std::max(_vel.value, config->minSpeed), config->maxSpeed);
@@ -192,23 +178,28 @@ void Plane::updatePosition(float timeDelta) {
   _pos.lat() += std::sin(_vel.heading) * _vel.value * timeDelta;
   _pos.lon() += std::cos(_vel.heading) * _vel.value * timeDelta;
 
+  // <<<<<<< HEAD
   // Altitude
   double altitudeDelta = getTrgAlt() - _pos.alt();
 
-  _pos.alt() += sgn(altitudeDelta) *
-    std::min(std::abs(altitudeDelta), _auxParam.altChange * timeDelta);
-  
+  _pos.alt() += sgn(altitudeDelta) * std::min(std::abs(altitudeDelta),
+                                              _auxParam.altChange * timeDelta);
+
   _pos.alt() = std::max(std::min(_pos.alt(), config->maxAltitude), 0.0);
 }
 
 void Plane::updateFlightPlan(bool force, double margin) {
-  if (mode == MODE::HDG) return;
+  // <<<<<<< HEAD
+  if (mode == MODE::HDG)
+    return;
 
-  if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH) margin = 5;
+  if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH)
+    margin = 5;
 
   if (force || distance(_pos, _target.pos) < margin) {
-    if ((_flightPlan.route.size() == 0 && _flightPlan.auxiliary.size() == 0) 
-        || (mode == MODE::AUX && _flightPlan.auxiliary.size() == 0)) {
+    if ((_flightPlan.route.size() == 0 && _flightPlan.auxiliary.size() == 0) ||
+        (mode == MODE::AUX && _flightPlan.auxiliary.size() == 0)) {
+      // =======
       setModeHdg();
       return;
     }
@@ -236,13 +227,14 @@ void Plane::updateFlightPlan(bool force, double margin) {
     }
 
     if (next.useHeading) {
-      std::cout << "Changing Target " << next.pos <<std::endl;
+      // <<<<<<< HEAD
+      std::cout << "Changing Target " << next.pos << std::endl;
       _flightPlan.vaildPathFound = false;
+      // =======
       generateHelperWaypoints(next);
     } else {
       addWaypoint(next, true);
       this->_target = next;
-
     }
   }
 }
@@ -273,35 +265,39 @@ double Plane::getTrgVel() {
 }
 
 double Plane::getTrgAlt() {
-    if (_auxParam.overwriteAlt || mode == MODE::HDG) {
+  if (_auxParam.overwriteAlt || mode == MODE::HDG) {
     return _auxParam.alt;
   }
   if (_target.interpolateAlt) {
-    return _flightPlan.interTrg.pos.alt() + (_target.pos.alt() - _flightPlan.interTrg.pos.alt()) /
-      distance(_target.pos, _flightPlan.interTrg.pos) * distance(_pos, _flightPlan.interTrg.pos);
+    return _flightPlan.interTrg.pos.alt() +
+           (_target.pos.alt() - _flightPlan.interTrg.pos.alt()) /
+               distance(_target.pos, _flightPlan.interTrg.pos) *
+               distance(_pos, _flightPlan.interTrg.pos);
   }
   return _target.pos.alt();
 }
 
 void Plane::setModeHdg() {
-  if(grdMode != GRD_MODE::NONE) {
+  if (grdMode != GRD_MODE::NONE) {
     _auxParam.overwriteVel = true;
     _auxParam.vel.value = 0;
     if (grdMode == GRD_MODE::TAXI_OUT) {
       grdMode = GRD_MODE::IDLE;
-    } else if(grdMode == GRD_MODE::TAXI_IN) {
+    } else if (grdMode == GRD_MODE::TAXI_IN) {
       grdMode = GRD_MODE::HOLD_RWY;
     } else if (grdMode == GRD_MODE::TAXI_RWY) {
       grdMode = GRD_MODE::TAKEOFF;
     }
     return;
   }
-  if(mode != MODE::HDG) setAuxParam();
+  if (mode != MODE::HDG)
+    setAuxParam();
   mode = MODE::HDG;
 }
 
 void Plane::setModeAux() {
-  if (grdMode == GRD_MODE::APPROACH) grdMode = GRD_MODE::NONE;
+  if (grdMode == GRD_MODE::APPROACH)
+    grdMode = GRD_MODE::NONE;
   mode = MODE::AUX;
   _flightPlan.auxiliary.clear();
   setAuxParam();
@@ -312,12 +308,11 @@ void Plane::setModeAuto() {
   mode = MODE::AUTO;
 }
 
-void Plane::setModePlayer() {
-    mode = MODE::PLAYER;
-}
+void Plane::setModePlayer() { mode = MODE::PLAYER; }
 
 double Plane::getTurnFactor() {
-  if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH) return _vel.value/33;
+  if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH)
+    return _vel.value / 33;
 
   double n = (_declaredEmergency) ? config->maxLoad : config->normalLoad;
   return 9.81 / _vel.value * std::sqrt(std::pow(n, 2) - 1);
@@ -325,15 +320,18 @@ double Plane::getTurnFactor() {
 
 double Plane::findHeadingDelta(GeoPos<double> pos, GeoPos<double> targetPos) {
   double targetHeading;
-  if (mode == MODE::HDG) targetHeading = _auxParam.vel.heading;
+  // <<<<<<< HEAD
+  if (mode == MODE::HDG)
+    targetHeading = _auxParam.vel.heading;
+  // =======
   else {
     targetHeading = fixAngle(
         std::atan2(targetPos.lat() - pos.lat(), targetPos.lon() - pos.lon()));
   }
 
   // Check if turn is possible
- /* if (_mode != MODE::HDG && checkMinRadius())
-    return 0;*/
+  /* if (_mode != MODE::HDG && checkMinRadius())
+     return 0;*/
 
   // Check if advanced pathfinding requires repositioning
   if (mode != MODE::HDG && !_flightPlan.vaildPathFound) {
@@ -356,8 +354,10 @@ double Plane::getTurnRadius() {
   double vel = std::max(_vel.value, getTrgVel());
   vel = std::min(std::max(vel, config->minSpeed), config->maxSpeed);
   double n = (_declaredEmergency) ? config->maxLoad : config->normalLoad;
-  return 1.2 * std::sqrt(-std::pow(vel, 4) /
-    (std::pow(G, 2) * (1 - std::pow(n, 2))));
+  // <<<<<<< HEAD
+  return 1.2 *
+         std::sqrt(-std::pow(vel, 4) / (std::pow(G, 2) * (1 - std::pow(n, 2))));
+  // =======
 }
 
 bool Plane::checkMinRadius() {
@@ -372,10 +372,8 @@ bool Plane::checkMinRadius() {
   return (distance(_target.pos, A) < r || distance(_target.pos, B) < r);
 }
 
-
-
 // Check 4 circle non-overlaping match combinations and find
-// coresponding 4 valid tangent lines 
+// coresponding 4 valid tangent lines
 void Plane::generateHelperWaypoints(FlightSegment targetSegment) {
   targetSegment.useHeading = false;
   addWaypoint(targetSegment, true);
@@ -384,22 +382,23 @@ void Plane::generateHelperWaypoints(FlightSegment targetSegment) {
   Velocity tVel = targetSegment.vel;
 
   double r = getTurnRadius();
-  
-  Waypoint start = { _pos.lon(), _pos.lat(), _vel.heading };
-  Waypoint end = { tPos.lon(), tPos.lat(), tVel.heading };
 
+  Waypoint start = {_pos.lon(), _pos.lat(), _vel.heading};
+  Waypoint end = {tPos.lon(), tPos.lat(), tVel.heading};
+
+  // <<<<<<< HEAD
   int pointCount = int(std::ceil(r / 25.0));
   auto route = generateShortestRoute(start, end, r, pointCount);
-  
+
   if (route.size() == 0) {
     _flightPlan.vaildPathFound = false;
     return;
   }
 
-
-  addWaypoint({ {{route[0].y, route[0].x, tPos.alt()}}, tVel, false, false}, true);
+  addWaypoint({{{route[0].y, route[0].x, tPos.alt()}}, tVel, false, false},
+              true);
   for (int i = 1; i < route.size(); i++) {
-      addWaypoint({ {{route[i].y, route[i].x, tPos.alt()}}, tVel, false, false });
+    addWaypoint({{{route[i].y, route[i].x, tPos.alt()}}, tVel, false, false});
   }
 
   _flightPlan.vaildPathFound = true;
@@ -407,19 +406,22 @@ void Plane::generateHelperWaypoints(FlightSegment targetSegment) {
   updateFlightPlan();
 }
 
+// <<<<<<< HEAD
 void Plane::generateLandingWaypoints(RUNWAY approach, bool succesful = true,
-                              double slopeAngle = 3, double distance = 5000) {
+                                     double slopeAngle = 3,
+                                     double distance = 5000) {
 
-  std::array<FlightSegment, LANDING_SIZE>  choice 
-      = (approach == RUNWAY::R10) ? landing10 : landing28;
+  std::array<FlightSegment, LANDING_SIZE> choice =
+      (approach == RUNWAY::R10) ? landing10 : landing28;
   FlightSegment first = choice[0];
 
   double dir = first.vel.heading - PI;
   double alt = distance * std::tan(dgr2rad(slopeAngle));
 
+  // <<<<<<< HEAD
   GeoPos<double> wpLand = {{first.pos.lat() + sin(dir) * distance,
-                              first.pos.lon() + cos(dir) * distance, alt}};
-  generateHelperWaypoints({ wpLand, {_vel.value, first.vel.heading}});
+                            first.pos.lon() + cos(dir) * distance, alt}};
+  generateHelperWaypoints({wpLand, {_vel.value, first.vel.heading}});
   first.vel.value = config->landingSpeed;
   first.interpolateVel = true;
   addWaypoint(first);
@@ -433,8 +435,9 @@ void Plane::generateLandingWaypoints(RUNWAY approach, bool succesful = true,
   dir = first.vel.heading;
   double brakeDist = config->landingDistance;
   GeoPos<double> wpStop = {{first.pos.lat() + sin(dir) * brakeDist,
-                               first.pos.lon() + cos(dir) * brakeDist, 0}};
-  //addWaypoint(FlightSegment{ wpStop, {config->taxiSpeed,0}, false, false, true});
+                            first.pos.lon() + cos(dir) * brakeDist, 0}};
+  // addWaypoint(FlightSegment{ wpStop, {config->taxiSpeed,0}, false, false,
+  // true});
 
   int exitway = EXIT_START;
   if (approach == RUNWAY::R28 && wpStop.lon() < choice[exitway].pos.lon() ||
@@ -442,57 +445,59 @@ void Plane::generateLandingWaypoints(RUNWAY approach, bool succesful = true,
     exitway += EXIT_SIZE;
   };
 
-  addWaypoint({ choice[exitway].pos, {config->taxiSpeed, 0}, false, false, true });
-  for (int i = exitway+1; i < exitway+EXIT_SIZE; i++) {
-    addWaypoint({ choice[i].pos, {config->taxiSpeed, 0} });
+  addWaypoint(
+      {choice[exitway].pos, {config->taxiSpeed, 0}, false, false, true});
+  for (int i = exitway + 1; i < exitway + EXIT_SIZE; i++) {
+    addWaypoint({choice[i].pos, {config->taxiSpeed, 0}});
   }
-  for (int i = EXIT_START+2*EXIT_SIZE; i < LANDING_SIZE-1; i++) {
-    addWaypoint({ choice[i].pos, {config->taxiSpeed, 0} });
+  for (int i = EXIT_START + 2 * EXIT_SIZE; i < LANDING_SIZE - 1; i++) {
+    addWaypoint({choice[i].pos, {config->taxiSpeed, 0}});
   }
-  addWaypoint({ choice[LANDING_SIZE-1].pos, {0,0}, false, false, true});
+  addWaypoint({choice[LANDING_SIZE - 1].pos, {0, 0}, false, false, true});
 }
 
 void Plane::generateTaxiWaypoints(RUNWAY runway) {
-  std::array<FlightSegment, TAKEOFF_SIZE> choice 
-      = (runway == RUNWAY::R28) ? takeOff28 : takeOff10;
+  std::array<FlightSegment, TAKEOFF_SIZE> choice =
+      (runway == RUNWAY::R28) ? takeOff28 : takeOff10;
 
-  addWaypoint({ choice[0].pos, {config->taxiSpeed, 0} }, true);
+  addWaypoint({choice[0].pos, {config->taxiSpeed, 0}}, true);
   int last = TAKEOFF_SIZE - 1;
   for (int i = 1; i < last; i++) {
-    addWaypoint({ choice[i].pos, {config->taxiSpeed, 0} });
+    addWaypoint({choice[i].pos, {config->taxiSpeed, 0}});
   }
-  addWaypoint({ choice[last].pos, {0, 0}, false, false, true });
+  addWaypoint({choice[last].pos, {0, 0}, false, false, true});
 }
 
 void Plane::generateRunwayWaypoints(bool toFront = true) {
-  FlightSegment choice 
-      = (_flightPlan.setRunway == RUNWAY::R28) ? exitOuter10_1 : exitOuter28_1;
+  FlightSegment choice =
+      (_flightPlan.setRunway == RUNWAY::R28) ? exitOuter10_1 : exitOuter28_1;
 
   double dir = choice.vel.heading;
-  addWaypoint({ choice.pos, {config->taxiSpeed, dir} }, toFront);
-  GeoPos<double> stop = { {choice.pos.lat() + sin(dir) * 20,
-                           choice.pos.lon() + cos(dir) * 20, 0} };
-  addWaypoint({ stop, {0, 0}, false, false, true });
+  addWaypoint({choice.pos, {config->taxiSpeed, dir}}, toFront);
+  GeoPos<double> stop = {
+      {choice.pos.lat() + sin(dir) * 20, choice.pos.lon() + cos(dir) * 20, 0}};
+  addWaypoint({stop, {0, 0}, false, false, true});
 }
 
 void Plane::generateTakeOffWaypoints(bool toFront = true, double slope = 20) {
 
-  FlightSegment choice
-    = (_flightPlan.setRunway == RUNWAY::R28) ? exitOuter10_1 : exitOuter28_1;
+  FlightSegment choice =
+      (_flightPlan.setRunway == RUNWAY::R28) ? exitOuter10_1 : exitOuter28_1;
 
   double dist = config->landingDistance;
   double dir = choice.vel.heading;
-  GeoPos<double> takeOff = { {choice.pos.lat() + sin(dir) * dist,
-                              choice.pos.lon() + cos(dir) * dist, 0} };
+  GeoPos<double> takeOff = {{choice.pos.lat() + sin(dir) * dist,
+                             choice.pos.lon() + cos(dir) * dist, 0}};
   if (toFront) {
-    addWaypoint({ takeOff, {config->takeOffSpeed, 0}, false, false, true }, toFront);
+    addWaypoint({takeOff, {config->takeOffSpeed, 0}, false, false, true},
+                toFront);
   }
-  
+
   dist *= 4;
   double alt = dist * std::tan(dgr2rad(slope));
-  GeoPos<double> end = { {choice.pos.lat() + sin(dir) * dist,
-                              choice.pos.lon() + cos(dir) * dist, alt} };
-  addWaypoint({ end, {config->cruiseSpeed, 0}, false, true, true });
+  GeoPos<double> end = {{choice.pos.lat() + sin(dir) * dist,
+                         choice.pos.lon() + cos(dir) * dist, alt}};
+  addWaypoint({end, {config->cruiseSpeed, 0}, false, true, true});
 }
 
 void Plane::addWaypoint(FlightSegment segment, bool toFront) {
@@ -505,29 +510,38 @@ void Plane::addWaypoint(FlightSegment segment, bool toFront) {
 
 std::vector<GeoPos<double>> Plane::getTargets() const {
   std::vector<GeoPos<double>> targets;
-  if (mode == MODE::PLAYER || grdMode == GRD_MODE::IDLE) return targets;
+  if (mode == MODE::PLAYER || grdMode == GRD_MODE::IDLE)
+    return targets;
 
   targets.reserve(_flightPlan.route.size() + _flightPlan.auxiliary.size() + 1);
-  if (mode != MODE::HDG) targets.emplace_back(xy2geo(_target.pos));
+  if (mode != MODE::HDG)
+    targets.emplace_back(xy2geo(_target.pos));
   if (mode != MODE::HDG) {
-    for (auto& seg : _flightPlan.auxiliary) targets.emplace_back(xy2geo(seg.pos));
+    for (auto &seg : _flightPlan.auxiliary)
+      targets.emplace_back(xy2geo(seg.pos));
   }
   if (mode == MODE::AUTO) {
-    for (auto& seg : _flightPlan.route) targets.emplace_back(xy2geo(seg.pos));
+    for (auto &seg : _flightPlan.route)
+      targets.emplace_back(xy2geo(seg.pos));
   }
   return targets;
 }
 
 void Plane::setAuxParam() {
-    _auxParam.vel.heading = _vel.heading;
-    if(!_auxParam.overwriteVel) _auxParam.vel.value = _vel.value;
-    if(!_auxParam.overwriteAlt) _auxParam.alt = _pos.alt();
+  // <<<<<<< HEAD
+  _auxParam.vel.heading = _vel.heading;
+  if (!_auxParam.overwriteVel)
+    _auxParam.vel.value = _vel.value;
+  if (!_auxParam.overwriteAlt)
+    _auxParam.alt = _pos.alt();
 }
 
 // order handling
 void Plane::setAltitude(float altitude) {
-  if(grdMode != GRD_MODE::NONE) return;
-  if (mode != MODE::HDG && _target.interpolateAlt) return;
+  if (grdMode != GRD_MODE::NONE)
+    return;
+  if (mode != MODE::HDG && _target.interpolateAlt)
+    return;
 
   _auxParam.overwriteAlt = true;
   _auxParam.alt = ft2meter(altitude);
@@ -542,7 +556,8 @@ void Plane::setHeadpoint(GeoPos<double> point) {
 }
 
 void Plane::setHeading(float heading) {
-  if (grdMode == GRD_MODE::APPROACH) grdMode = GRD_MODE::NONE;
+  if (grdMode == GRD_MODE::APPROACH)
+    grdMode = GRD_MODE::NONE;
 
   setModeHdg();
   _auxParam.vel.heading = hdg2rad(heading);
@@ -603,7 +618,8 @@ void Plane::landing(RUNWAY runway) {
 }
 
 void Plane::touchAndGo(std::string name) {
-  if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH) return;
+  if (grdMode != GRD_MODE::NONE && grdMode != GRD_MODE::APPROACH)
+    return;
 
   setModeAux();
   if (name == "MAPt 28") {
@@ -613,10 +629,10 @@ void Plane::touchAndGo(std::string name) {
     _flightPlan.setRunway = RUNWAY::R10;
     generateLandingWaypoints(RUNWAY::R10, false);
   }
-
 }
 void Plane::taxiToRunway(std::string name) {
-  if (grdMode != GRD_MODE::IDLE) return;
+  if (grdMode != GRD_MODE::IDLE)
+    return;
 
   setModeAux();
   _auxParam.overwriteAlt = false;
@@ -630,7 +646,6 @@ void Plane::taxiToRunway(std::string name) {
     generateTaxiWaypoints(RUNWAY::R10);
   }
   grdMode = GRD_MODE::TAXI_IN;
-
 }
 void Plane::enterRunway() {
   if (grdMode == GRD_MODE::HOLD_RWY) {
@@ -661,7 +676,6 @@ void Plane::setFuel(float value) {
 void Plane::setVerticalSpeed(float value) {
   _auxParam.altChange = ft2meter(value);
 }
-
 
 void Plane::enterAirportLoop() {}
 void Plane::enterHolding() {}

@@ -48,6 +48,8 @@ using tcp = boost::asio::ip::tcp;
 // json namespaces
 using json = nlohmann::json;
 
-inline void fail(beast::error_code ec, char const *what) {
+inline void fail(beast::error_code ec, char const *what, bool fatal = false) {
   std::cerr << what << ": " << ec.message() << "\n";
+  if (fatal)
+    exit(1);
 }

@@ -42,7 +42,7 @@ GeoPos<double> geo2xy(GeoPos<double> pos) {
   return GeoPos<double>{
       {pos.lat() * matrix[0][0] + pos.lon() * matrix[0][1] + matrixConst[0],
        pos.lat() * matrix[1][0] + pos.lon() * matrix[1][1] + matrixConst[1],
-        ft2meter(pos.alt())}};
+       ft2meter(pos.alt())}};
 }
 
 GeoPos<double> xy2geo(GeoPos<double> pos) {
@@ -51,4 +51,23 @@ GeoPos<double> xy2geo(GeoPos<double> pos) {
                          (pos.lat() - matrixConst[0]) * matrixInv[1][0] +
                              (pos.lon() - matrixConst[1]) * matrixInv[1][1],
                          meter2ft(pos.alt())}};
+}
+
+double parseDMS(const std::string &dms) {
+  double degrees = 0, minutes = 0, seconds = 0;
+  char dir; // Default direction
+
+  // Parse DMS: Example "52°29'15,1''N"
+  sscanf(dms.c_str(), "%lf°%lf'%lf''%c", &degrees, &minutes, &seconds, &dir);
+
+  // Calculate decimal degrees
+  double decimalDegrees =
+      std::abs(degrees) + (minutes / 60.0) + (seconds / 3600.0);
+
+  // Adjust for direction
+  if (dir == 'W' || dir == 'S') {
+    decimalDegrees = -decimalDegrees;
+  }
+
+  return decimalDegrees;
 }

@@ -82,23 +82,6 @@ void Session::on_accept(beast::error_code ec) {
   do_read();
 }
 
-// void Session::send(const std::string &message) {
-//   // Copy the message data into a shared buffer
-//   auto buffer = std::make_shared<beast::flat_buffer>();
-//   auto mutable_buffer = buffer->prepare(message.size());
-//   std::memcpy(mutable_buffer.data(), message.data(), message.size());
-//   buffer->commit(message.size());
-
-//   // Post the work to the strand
-//   net::post(_strand, [self = shared_from_this(), buffer]() {
-//     self->_ws.async_write(
-//         buffer->data(),
-//         [self, buffer](beast::error_code ec, std::size_t bytes_transferred) {
-//           self->on_write(ec, bytes_transferred);
-//         });
-//   });
-// }
-
 void Session::send(const std::string &message) {
   auto buffer = std::make_shared<beast::flat_buffer>();
   auto mutable_buffer = buffer->prepare(message.size());

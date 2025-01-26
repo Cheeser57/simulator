@@ -1,0 +1,94 @@
+[
+  {
+    "id": 1737475085162,
+    "airline": "LOT",
+    "flight_number": "FL-1737475085162",
+    "plane_number": "AIR-1737475085162",
+    "type_of_aircraft": "None",
+    "callsign": "FL-1737475085162LOT",
+    "registrationnumber": "None",
+    "destination": "None",
+    "alternative_airports": "None",
+    "squawk": "None",
+    "isGrounded": false,
+    "weather": "None",
+    "velocity": {
+      "direction": 0,
+      "value": 100
+    },
+    "position": {
+      "latitude": "52°30'15,1''N",
+      "longitude": "016°34'46,1''E",
+      "altitude": 1000
+    },
+    "sim_id": false,
+    "items": [
+      {
+        "id": 1737475087543,
+        "statusId": 1737475085162,
+        "time": 0,
+        "is_entrypoint": false,
+        "is_exit_point": false,
+        "fuel_state": 1,
+        "weather": "None",
+        "Events": "None",
+        "position": {
+          "latitude": "52°29'15,1''N",
+          "longitude": "016°34'46,1''E",
+          "altitude": 1000
+        },
+        "velocity": {
+          "direction": "1",
+          "value": "100"
+        },
+        "squawk": "None"
+      }
+    ]
+  },
+  {
+    "id": 1737475652035,
+    "airline": "LOT",
+    "flight_number": "FL-1737475652035",
+    "plane_number": "AIR-1737475652035",
+    "type_of_aircraft": "None",
+    "callsign": "FL-1737475652035LOT",
+    "registrationnumber": "None",
+    "destination": "None",
+    "alternative_airports": "None",
+    "squawk": "None",
+    "isGrounded": false,
+    "weather": "None",
+    "velocity": {
+      "direction": 0,
+      "value": 100
+    },
+    "position": {
+      "latitude": "52°17'20,0''N",
+      "longitude": "017°00'42,7''E",
+      "altitude": 1000
+    },
+    "sim_id": true,
+    "items": [
+      {
+        "id": 1737475657611,
+        "statusId": 1737475652035,
+        "time": 0,
+        "is_entrypoint": true,
+        "is_exit_point": false,
+        "fuel_state": 2,
+        "weather": "None",
+        "Events": "None",
+        "position": {
+          "latitude": "52°07'59,9''N",
+          "longitude": "016°43'08,5''E",
+          "altitude": 1000
+        },
+        "velocity": {
+          "direction": 0,
+          "value": 100
+        },
+        "squawk": "None"
+      }
+    ]
+  }
+]
