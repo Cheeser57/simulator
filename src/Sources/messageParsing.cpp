@@ -11,6 +11,8 @@ void order(const json &msg, std::shared_ptr<SimulatorState> simState) {
     return;
   }
 
+  if (it->_info.sim_id) return;
+
   std::string orderType = msg["order_type"];
 
   std::unordered_map<std::string, const std::function<void()>> orderTypeMap = {
